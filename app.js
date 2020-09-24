@@ -41,9 +41,9 @@ const addExpressionBoxesIntoDOM = () => {
   main.innerHTML = humanExpressions
     .map(
       ({ img, text }) => `
-    <div class="expression-box">
-      <img src="${img}" alt="${text}" />
-      <p class="info">${text}</p>
+    <div class="expression-box" data-js="${text}">
+      <img src="${img}" alt="${text}" data-js="${text}" />
+      <p class="info" data-js="${text}">${text}</p>
     </div>
     `
     )
@@ -51,43 +51,38 @@ const addExpressionBoxesIntoDOM = () => {
 };
 addExpressionBoxesIntoDOM();
 
+const setStyleOfClickedDiv = (dataValue) => {
+  const div = document.querySelector(`[data-js="${dataValue}"]`);
+  div.classList.add("active");
+
+  setTimeout(() => div.classList.remove("active"), 2000);
+};
+
 main.addEventListener("click", (e) => {
   const clickedElement = e.target;
-  if (clickedElement.tagName === "IMG" || clickedElement.tagName === "P") {
-    setTextMessage(text);
+  const clickedElementTextMustBeSpoken = ["img", "p"].some(
+    (elementName) =>
+      clickedElement.tagName.toLowerCase() === elementName.toLowerCase()
+  );
+  const clickedElementText = clickedElement.dataset.js;
+  if (clickedElementTextMustBeSpoken) {
+    setTextMessage(clickedElementText);
     speakText();
-
-    div.classList.add("active");
-
-    setTimeout(() => div.classList.remove("active"), 2000);
+    setStyleOfClickedDiv(clickedElementText);
   }
 });
-
-// const createExpressionBox = ({ img, text }) => {
-//   const div = document.createElement("div");
-//   div.classList.add("expression-box");
-//   div.innerHTML = `
-//         <img src="${img}" alt="${text}" />
-//         <p class="info">${text}</p>
-//     `;
-
-//   div.addEventListener("click", () => {
-//     setTextMessage(text);
-//     speakText();
-
-//     div.classList.add("active");
-
-//     setTimeout(() => div.classList.remove("active"), 2000);
-//   });
-//   main.appendChild(div);
-// };
-
-// humanExpressions.forEach(createExpressionBox);
-
 let voices = [];
 
 speechSynthesis.addEventListener("voiceschanged", () => {
   voices = speechSynthesis.getVoices();
+
+  const optionsElements = voices.reduce((acc, { name, lang }) => {
+    acc += `<option value="${name}">${lang} | ${name}</option>`;
+    return acc;
+  }, "");
+
+  selectElement.innerHTML = optionsElements;
+
   const googleVoice = voices.find(
     (voice) => voice.name === "Google português do Brasil"
   );
@@ -97,19 +92,19 @@ speechSynthesis.addEventListener("voiceschanged", () => {
       "Microsoft Francisca Online (Natural) - Portuguese (Brazil)"
   );
 
-  voices.forEach(({ name, lang }) => {
-    const option = document.createElement("option");
-    option.value = name;
-    if (googleVoice && option.value === googleVoice.name) {
-      utterence.voice = googleVoice;
-      option.selected = true;
-    } else if (mircosoftVoice && option.value === mircosoftVoice.name) {
-      utterence.voice = mircosoftVoice;
-      option.selected = true;
-    }
-    option.textContent = `${lang} | ${name}`;
-    selectElement.appendChild(option);
-  });
+  if (googleVoice) {
+    utterence.voice = googleVoice;
+    const googleOptionElement = selectElement.querySelector(
+      `[value="${googleVoice.name}"]`
+    );
+    googleOptionElement.selected = true;
+  } else if (mircosoftVoice) {
+    utterence.voice = mircosoftVoice;
+    const microsoftOptionElement = selectElement.querySelector(
+      `[value="${mircosoftVoice.name}"]`
+    );
+    microsoftOptionElement.selected = true;
+  }
 });
 
 buttonInsertText.addEventListener("click", () => {
