@@ -71,18 +71,23 @@ main.addEventListener("click", (e) => {
     setStyleOfClickedDiv(clickedElementText);
   }
 });
-let voices = [];
 
-speechSynthesis.addEventListener("voiceschanged", () => {
-  voices = speechSynthesis.getVoices();
-
-  const optionsElements = voices.reduce((acc, { name, lang }) => {
+const insertOptionElementsIntoDOM = (voices) => {
+  selectElement.innerHTML = voices.reduce((acc, { name, lang }) => {
     acc += `<option value="${name}">${lang} | ${name}</option>`;
     return acc;
   }, "");
+};
 
-  selectElement.innerHTML = optionsElements;
+const setUtteranceVoice = (voice) => {
+  utterence.voice = voice;
+  const voiceOptionElement = selectElement.querySelector(
+    `[value="${voice.name}"]`
+  );
+  voiceOptionElement.selected = true;
+};
 
+const setPTBRVoices = (voices) => {
   const googleVoice = voices.find(
     (voice) => voice.name === "Google português do Brasil"
   );
@@ -93,18 +98,19 @@ speechSynthesis.addEventListener("voiceschanged", () => {
   );
 
   if (googleVoice) {
-    utterence.voice = googleVoice;
-    const googleOptionElement = selectElement.querySelector(
-      `[value="${googleVoice.name}"]`
-    );
-    googleOptionElement.selected = true;
+    setUtteranceVoice(googleVoice);
   } else if (mircosoftVoice) {
-    utterence.voice = mircosoftVoice;
-    const microsoftOptionElement = selectElement.querySelector(
-      `[value="${mircosoftVoice.name}"]`
-    );
-    microsoftOptionElement.selected = true;
+    setUtteranceVoice(mircosoftVoice);
   }
+};
+
+let voices = [];
+
+speechSynthesis.addEventListener("voiceschanged", () => {
+  voices = speechSynthesis.getVoices();
+
+  insertOptionElementsIntoDOM(voices);
+  setPTBRVoices(voices);
 });
 
 buttonInsertText.addEventListener("click", () => {
